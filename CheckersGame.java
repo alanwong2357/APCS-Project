@@ -20,13 +20,11 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
 	public static CheckersGame ch= new CheckersGame();
 	private int mouseRow=9;
 	private int mouseCol=9;
-	private int turn=1;
+	private int turn=2;
 	static BufferedImage king=null;
 
 	public static void main(String[] args) throws IOException {
-			king = ImageIO.read(new File("king.png"));
-			//king.setColor(Color.WHITE);
-			//JLabel king=new JLabel(new ImageIcon(kingimage));
+		king = ImageIO.read(new File("king.png"));
 		//CheckersGame ch= new CheckersGame();
 		ch.drawBoard();
 		ch.initialize();
@@ -44,7 +42,8 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
     	ch.repaint();
  		System.out.println();
 	}
-		public void drawBoard() {
+	// Creates Jframe and adds mouselistener
+	public void drawBoard() {
 		JFrame frame = new JFrame();
 		frame.setContentPane(ch);
 		//frame.getContentPane().add(new CheckersGame());
@@ -58,6 +57,7 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
        // revalidate();
         frame.addMouseListener(this);
 	}
+	// Creates checker pieces in their starting positions
 	public void initialize() {
 		for(int col=0;col<8;col+=2) {
 			boardState[5][col]=BLACK;
@@ -82,6 +82,7 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
 	// 		}
 	// 	}
 	// }
+	// Mouselistener that records the coordinates of mousepress and executes moves 
 	public void mousePressed(MouseEvent e) {
 		//System.out.println("x: "+e.getX()+"  y: "+e.getY());
 
@@ -141,6 +142,7 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
 			}
 		}
 	}
+	// Creates destination for jumping a piece
 	public static int diff(int before,int after) {
 		if(before-after<0) {
 			return 1;
@@ -161,27 +163,7 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
 	public void mouseEntered(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
 	public void actionPerformed(ActionEvent e) {}
-
-	public boolean isLegal(int piece,int mouseRow,int mouseCol,int row,int col) {
-		if(piece==2) {
-			if(mouseRow < row && boardState[row][col]==0) {
-				if(col>1 && col<6 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==1 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==3) {
-					boardState[row-mouseRow][col-mouseCol]=1;
-				}
-				return true;
-			} 
-		} else if(piece==1  && boardState[row][col]==0) {
-			if(mouseRow > row) {
-				if(col>1 && col<6 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==2 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==4) {
-					boardState[row-mouseRow][col-mouseCol]=1;
-				}
-				return true;
-			}
-		} else if(piece==3 || piece==4 && boardState[row][col]==0) {
-			return true;
-		}
-		return false;
-	}
+	// Highlights available moves for selected piece
 	public void showMoves(int piece,int row,int col) {
 		if(piece==1 && row>0) {
 			if(col<7) {
@@ -221,7 +203,7 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
 				}
 			}
 			if(row<6 && col<6) {
-				if((boardState[row+1][col+1]==1 || boardState[row+1][col-1]==3) && boardState[row+2][col+2]==0) {
+				if((boardState[row+1][col+1]==1 || boardState[row+1][col+1]==3) && boardState[row+2][col+2]==0) {
 					highlightBoard[row+2][col+2]=1;
 				}
 			}
@@ -268,7 +250,7 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
 		}
 		ch.repaint();
 	}
-
+	// Draws Checker Pieces
 	public static void Piece(int piece,int col,int row,Graphics g, Color color) {
 		g.setColor(color);
 		g.fillOval(col*75+102,row*75+102,70,70);
@@ -317,14 +299,6 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
         		}
         	}
         }
-        //  for(int i=0;i<8;i++) {
-        // 	for(int j=0;j<8;j++) {
-        // 		if(boardState[i][j]==3 || boardState[i][j]==4) {
-        // 			g.drawImage(king,col*75+102,row*75+102,70,70,null);
-        // 		}
-        // 	}
-        // }
-
         // highlight moves for piece selected
 		g.setColor(Color.CYAN);
 		for(int i=0;i<8;i++) {
@@ -345,5 +319,24 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
   //       	}
   //       }
 	}
-	
+	public boolean isLegal(int piece,int mouseRow,int mouseCol,int row,int col) {
+		if(piece==2) {
+			if(mouseRow < row && boardState[row][col]==0) {
+				if(col>1 && col<6 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==1 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==3) {
+					boardState[row-mouseRow][col-mouseCol]=1;
+				}
+				return true;
+			} 
+		} else if(piece==1  && boardState[row][col]==0) {
+			if(mouseRow > row) {
+				if(col>1 && col<6 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==2 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==4) {
+					boardState[row-mouseRow][col-mouseCol]=1;
+				}
+				return true;
+			}
+		} else if(piece==3 || piece==4 && boardState[row][col]==0) {
+			return true;
+		}
+		return false;
+	}
 }
