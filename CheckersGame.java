@@ -5,139 +5,138 @@ import java.io.*;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.Graphics;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 
-public class CheckersGame extends JPanel implements ActionListener, MouseListener{
-	public static int[][] baseGameData = new int[8][8]; 
+public class CheckersGame extends JPanel implements MouseListener{
+	public static int[][] highlightBoard = new int[8][8]; 
 	public static int[][] boardState = new int[8][8];
-	public static final int EMPTY=0, RED=1, RKING=3, BLACK=2,WKING=4;
-	public static JFrame frame;
-	private JButton[][] button=new JButton[8][8];
+	public static final int EMPTY=0, BLACK=1, RED=2, BKING=3, RKING=4;
 	public static CheckersGame ch= new CheckersGame();
 	private int mouseRow=9;
 	private int mouseCol=9;
+	private int turn=2;
+	JLabel turnIndicator;
+	private JLabel jlabel;
+	static BufferedImage king=null;
 
-	public static void main(String[] args) {
-		//CheckersGame ch= new CheckersGame();
+	public static void main(String[] args) throws IOException {
+		king = ImageIO.read(new File("king.png"));
 		ch.drawBoard();
 		ch.initialize();
-		
-		for(int i=0;i<8;i++) {
-			for(int j=0;j<8;j++) {
-				System.out.print(boardState[i][j]+" ");
-			}
-			System.out.println();
-		}
-
-		//ch.revalidate();
-    	ch.repaint();
-    	ch.movePiece(5,2,4,3);
- 		System.out.println();
 	}
-		public void drawBoard() {
-		JFrame frame = new JFrame();
+	public CheckersGame() {
+        setSize(1000,800);	
+        addMouseListener(this);
+        repaint();
+       	//revalidate();
+       	setVisible(true);
+	}
+	// Creates Jframe and adds mouselistener
+	public void drawBoard() {
+		JFrame frame = new JFrame("Checkers");
 		frame.setContentPane(ch);
-		//frame.getContentPane().add(new CheckersGame());
-        frame.setSize(800,800);
-        
-        //frame.setLocationRelativeTo(null);
-        frame.setBackground(Color.LIGHT_GRAY);
+		frame.setLayout(null);
+        frame.setSize(1000,800);	
+       	frame.setBackground(Color.LIGHT_GRAY);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
-        repaint();
-       // revalidate();
+        ch.repaint();
         frame.addMouseListener(this);
-  //       for(int i=0;i<8;i++) {
-		// 	for(int j=0;j<8;j++) {
-		// 		button[i][j]=new JButton();
-		// 		button[i][j].addActionListener(this);
-		// 	}
-		// }
+        ch.revalidate();
 	}
+	// Creates checker pieces in their starting positions
 	public void initialize() {
 		for(int col=0;col<8;col+=2) {
-			boardState[5][col]=RED;
-			boardState[7][col]=RED;
+			boardState[5][col]=BLACK;
+			boardState[7][col]=BLACK;
 		}
 		for(int col=1;col<8;col+=2) {
-			boardState[6][col]=RED;
+			boardState[6][col]=BLACK;
 		}
 		for(int col=1;col<8;col+=2) {
-			boardState[0][col] = BLACK;
-			boardState[2][col] = BLACK;
+			boardState[0][col] = RED;
+			boardState[2][col] = RED;
 		}
 		for(int col=0; col < (8); col+=2) {
-			boardState[1][col] = BLACK;
+			boardState[1][col] = RED;
 		}
 	}
-	public void movePiece(int row,int col,int finalRow,int finalCol) {
-		boardState[finalRow][finalCol]=boardState[row][col];
-    	boardState[row][col]=0;
-    	//ch.repaint();
-    	System.out.println();
-  	 for(int i=0;i<8;i++) {
-			for(int j=0;j<8;j++) {
-				System.out.print(boardState[i][j]+" ");
-			}
-			System.out.println();
-		}
-	}
-	// public void addButton(JFrame frame) {
-	// 	for(int i=0;i<8;i++) {
-	// 		for(int j=0;j<8;j++) {
-	// 			button[j][i]=new JButton((j+1)+", "+(j+1));
-	// 			frame.add(button[j][i]);
-	// 		}
-	// 	}
-	// }
-	public void removePiece(Graphics g, int row,int col) {
-		g.setColor(Color.BLACK);
-		g.fillOval(col*75+102,row*75+102,70,70);
-	}
+
+	// Mouselistener that records the coordinates of mousepress and executes moves 
 	public void mousePressed(MouseEvent e) {
 		//System.out.println("x: "+e.getX()+"  y: "+e.getY());
 		int col=(e.getX()-102)/75;
-		int row=(e.getY()-130)/75;
+		int row=(e.getY()-100)/75;
+		//System.out.println("row: "+row+" col"+col);
+		//System.out.println();
 		if(row<8 && row>=0 && col>=0 && col<8 && ((col%2==0 && row%2!=0) || (col%2!=0 && row%2==0))) {
 			if(mouseRow==9 && mouseCol==9) {
-				mouseRow=row;
-				mouseCol=col;
+				if(turn==2 && (boardState[row][col]==2 || boardState[row][col]==4)) {
+					mouseRow=row;
+					mouseCol=col;
+					int piece=boardState[row][col];
+					showMoves(piece,row,col);
+				} else if(turn==1 && (boardState[row][col]==1 || boardState[row][col]==3)) {
+					mouseRow=row;
+					mouseCol=col;
+					int piece=boardState[row][col];
+					showMoves(piece,row,col);
+				}
+				
 			} else if(mouseRow!=9 && mouseCol!=9) {
 				int prev=boardState[mouseRow][mouseCol];
-				System.out.println("mouse: "+mouseRow+", "+ mouseCol);
-				System.out.println("aft: "+row+", "+ col);
-				if(isLegal(prev,mouseRow,mouseCol,row,col)) {
-					boardState[mouseRow][mouseCol]=0;
-					boardState[row][col]=prev;
+				// System.out.println("mouse: "+mouseRow+", "+ mouseCol);
+				// System.out.println("aft: "+row+", "+ col);
+				if((mouseRow==row && mouseCol==col) || highlightBoard[row][col]==0) {
 					mouseRow=9;
 					mouseCol=9;
-					ch.repaint();
 				}
-				// s
+				if((mouseRow!=row || mouseCol!=col) && highlightBoard[row][col]==1) { 
+					if(Math.abs(col-mouseCol)>1) {
+						boardState[mouseRow+diff(mouseRow,row)][mouseCol+diff(mouseCol,col)]=0;
+					} 
+					if(boardState[mouseRow][mouseCol]==2 && row==7) {
+						boardState[row][col]=4;
+						repaint();
+					}else if(boardState[mouseRow][mouseCol]==1 && row==0) {
+						boardState[row][col]=3;
+						repaint();
+					} else {
+						boardState[row][col]=prev;
+					}
+					boardState[mouseRow][mouseCol]=0;
+					mouseRow=9;
+					mouseCol=9;
+					switchTurn();
+				} 
+				for(int i=0;i<8;i++) {
+			       	for(int j=0;j<8;j++) {
+			       		highlightBoard[i][j]=0;
+			       	}
+		        }
+			    repaint();
 			}
 		}
-		// if(row<8 && row>=0 && col>=0 && col<8 && boardState[row][col]!=0) {
-		// 	System.out.println(row+","+col);
-		// 	boardState[row][col]=0;
-		// 	//ch.removePiece(g,row,col);
-		// 	ch.repaint();
-		// 	//validate();
-		// 	setVisible(true);
-
-		// }
-		// if(row<8 && row>=0 && col>=0 && col<8 && boardState[row][col]==0) {
-		// 	System.out.println(row+","+col);
-		// 	 boardState[row][col]=2;
-		// 	 ch.repaint();
-		// 	 setVisible(true);
-
-		// }
-		// e.getSource().color=Color.BLUE;
-		// e.this.repaint();
+	}
+	// Creates destination square for jumping a piece
+	public static int diff(int before,int after) {
+		if(before-after<0) {
+			return 1;
+		} else if(before-after>0) {
+			return -1;
+		}
+		return 0;
+	}
+	public void switchTurn() {
+		if(turn==1) {
+			turn=2;
+		} else if(turn==2) {
+			turn=1;
+		}
 	}
 	public void mouseClicked(MouseEvent e) {	}
 	public void mouseReleased(MouseEvent e) {}
@@ -145,54 +144,111 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
 	public void mouseExited(MouseEvent e) {}
 	public void actionPerformed(ActionEvent e) {}
 
-	public boolean isLegal(int piece,int mouseRow,int mouseCol,int row,int col) {
-		if(piece==2) {
-			if(mouseRow < row && boardState[row][col]==0) {
-				return true;
+	// Highlights available moves for selected piece
+	public void showMoves(int piece,int row,int col) {
+		if(piece==1 && row>0) {
+			if(col<7) {
+				if(boardState[row-1][col+1]==0) {
+					highlightBoard[row-1][col+1]=1;
+				}
 			}
-		} else if(piece==1  && boardState[row][col]==0) {
-			if(mouseRow > row) {
-				return true;
+			if(col>0) {
+				if(boardState[row-1][col-1]==0) {
+					highlightBoard[row-1][col-1]=1;
+				}
 			}
-		} else if(piece==3 || piece==4 && boardState[row][col]==0) {
-			return true;
+			if(row>1 && col>1) {
+				if((boardState[row-1][col-1]==2 || boardState[row-1][col-1]==4) && boardState[row-2][col-2]==0) {
+					highlightBoard[row-2][col-2]=1;
+				}
+			}
+			if(row>1 && col<6) {
+				if((boardState[row-1][col+1]==2 || boardState[row-1][col+1]==4) && boardState[row-2][col+2]==0) {
+					highlightBoard[row-2][col+2]=1;
+				}
+			}
+		} else if(piece==2 && row<7) {
+			if(col<7) {
+				if(boardState[row+1][col+1]==0) {
+					highlightBoard[row+1][col+1]=1;
+				}
+			}
+			if(col>0) {
+				if(boardState[row+1][col-1]==0) {
+					highlightBoard[row+1][col-1]=1;
+				}
+			}
+			if(row<6 &&col>1) {
+				if((boardState[row+1][col-1]==1 || boardState[row+1][col-1]==3) && boardState[row+2][col-2]==0) {
+					highlightBoard[row+2][col-2]=1;
+				}
+			}
+			if(row<6 && col<6) {
+				if((boardState[row+1][col+1]==1 || boardState[row+1][col+1]==3) && boardState[row+2][col+2]==0) {
+					highlightBoard[row+2][col+2]=1;
+				}
+			}
+		} else if(piece==3 || piece==4) {
+			if(row<7 && col<7 && boardState[row+1][col+1]==0) {
+				highlightBoard[row+1][col+1]=1;
+			}
+			if(row>0 && col<7 && boardState[row-1][col+1]==0) {
+				highlightBoard[row-1][col+1]=1;
+			}
+			if(row<7 && col>0 && boardState[row+1][col-1]==0) {
+				highlightBoard[row+1][col-1]=1;
+			}
+			if(row>0 && col>0 && boardState[row-1][col-1]==0) {
+				highlightBoard[row-1][col-1]=1;
+			}
+			if(piece==3) {
+				if(row>1 && col>1 && (boardState[row-1][col-1]==2 || boardState[row-1][col-1]==4) && boardState[row-2][col-2]==0) {
+					highlightBoard[row-2][col-2]=1;
+				}
+				if(row>1 && col<6 && (boardState[row-1][col+1]==2 || boardState[row-1][col+1]==4) && boardState[row-2][col+2]==0) {
+					highlightBoard[row-2][col+2]=1;
+				}
+				if(row<6 && col>1 && (boardState[row+1][col-1]==2 || boardState[row+1][col-1]==4) && boardState[row+2][col-2]==0) {
+					highlightBoard[row+2][col-2]=1;
+				}
+				if(row<6 && col<6 && (boardState[row+1][col+1]==2 || boardState[row+1][col+1]==4) && boardState[row+2][col+2]==0) {
+					highlightBoard[row+2][col+2]=1;
+				}
+			} else if(piece==4) {
+				if(row>1 && col>1 && (boardState[row-1][col-1]==1 || boardState[row-1][col-1]==3) && boardState[row-2][col-2]==0) {
+					highlightBoard[row-2][col-2]=1;
+				}
+				if(row>1 && col<6 && (boardState[row-1][col+1]==1 || boardState[row-1][col+1]==3) && boardState[row-2][col+2]==0) {
+					highlightBoard[row-2][col+2]=1;
+				}
+				if(row<6 && col>1 && (boardState[row+1][col-1]==1 || boardState[row+1][col-1]==3) && boardState[row+2][col-2]==0) {
+					highlightBoard[row+2][col-2]=1;
+				}
+				if(row<6 && col<6 && (boardState[row+1][col+1]==1 || boardState[row+1][col+1]==3) && boardState[row+2][col+2]==0) {
+					highlightBoard[row+2][col+2]=1;
+				}
+			}
 		}
-		return false;
+		repaint();
 	}
-	// public boolean isLegal(int row,int col,int finalRow,int finalCol) {
-	// 	if(boardState[finalRow][finalCol]==0) {
-	//		return true;	
-	//	} else if((boardState[finalRow][finalCol]==1 || boardState[finalRow][finalCol]==2) && boardState[finalRow+finalRow-row][finalCol+1]==0) {
-			// return true;
-	//	} else if()
-	//		
-	// }
-
-	// public void update(Graphics g) {
-	// 	paint(g);
-	// }
-	public static void Piece(int col,int row,Graphics g, Color color) {
+	public void gameOver(Graphics g) {
+		String text = " GAME OVER ";
+	}
+	// Draws Checker Pieces
+	public static void Piece(int piece,int col,int row,Graphics g, Color color) {
 		g.setColor(color);
 		g.fillOval(col*75+102,row*75+102,70,70);
 		if(color.equals(Color.BLACK)) {
 			g.setColor(Color.WHITE); 
 			g.drawOval(col*75+102,row*75+102,70,70);
 		}
+		if(piece==3 || piece==4) {
+			g.drawImage(king,col*75+107,row*75+105,60,60,null);
+		}
 	}
-
-	public void makeMove(int row, int col, int storedRow, int storedCol){
-		int x = boardState[storedCol][storedRow];
-		boardState[col][row] = x;
-		boardState[storedCol][storedRow] = EMPTY; 
-	}
-
-	// public void mousePressed(java.awt.event.MouseEvent e) {
-	// 	int col=e.getx()/75;
-	// 	int row=e.gety()/75;
-	// }
 
 	public void paint(Graphics g) {
-		//super.paintComponent(g);
+		// paints squares
 		g.setColor(Color.DARK_GRAY);
         g.fillRect(100, 100, 600, 600);
         for(int i = 100; i <= 600; i+=150){
@@ -206,27 +262,53 @@ public class CheckersGame extends JPanel implements ActionListener, MouseListene
                 g.clearRect(i, j, 75, 75);
             }
         }
+        // paints checker pieces
         for(int i=0;i<8;i++) {
         	for(int j=0;j<8;j++) {
         		if(boardState[i][j]==2) {
-        			Piece(j,i,g,Color.BLACK);
+        			Piece(2,j,i,g,Color.BLACK);
+        		} else if(boardState[i][j]==4) {
+        			Piece(4,j,i,g,Color.BLACK);
         		}
         	}
         }
         for(int i=0;i<8;i++) {
         	for(int j=0;j<8;j++) {
         		if(boardState[i][j]==1) {
-        			Piece(j,i,g,Color.RED);
+        			Piece(1,j,i,g,Color.RED);
+        		} else if(boardState[i][j]==3) {
+        			Piece(3,j,i,g,Color.RED);
         		}
         	}
         }
-		g.setColor(Color.BLACK);
-		//highlight square implementation
-		// if(selectedRow<=0) {
-		// 	g.setColor(Color.BLUE);
-		// 	y=selectedRow*20;
-		// 	x=selectedCol*20;
-		//	g.drawRect(x,y,70,70);
+        // highlight moves for piece selected
+		g.setColor(Color.CYAN);
+		for(int i=0;i<8;i++) {
+        	for(int j=0;j<8;j++) {
+        		if(highlightBoard[i][j]==1) {
+        			g.fillRect(j*75+100,i*75+100,76,76);
+        		}
+        	}
+        }
+	}
+	public boolean isLegal(int piece,int mouseRow,int mouseCol,int row,int col) {
+		if(piece==2) {
+			if(mouseRow < row && boardState[row][col]==0) {
+				if(col>1 && col<6 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==1 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==3) {
+					boardState[row-mouseRow][col-mouseCol]=1;
+				}
+				return true;
+			} 
+		} else if(piece==1  && boardState[row][col]==0) {
+			if(mouseRow > row) {
+				if(col>1 && col<6 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==2 && boardState[mouseRow+row-mouseRow][mouseCol+col-mouseCol]==4) {
+					boardState[row-mouseRow][col-mouseCol]=1;
+				}
+				return true;
+			}
+		} else if(piece==3 || piece==4 && boardState[row][col]==0) {
+			return true;
 		}
-	
+		return false;
+	}
 }
